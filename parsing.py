@@ -3,80 +3,75 @@ from datetime import datetime
 
 KEYWORD_GROUPS = {
     'Authentication & Users': ['auth', 'user', 'login', 'password', 'register', 'profile'],
-    'Features': ['feat', 'implement', 'add', 'create'],
+    'Features': ['feat', 'implement', 'add', 'create', 'added'],
     'Bug Fixes': ['fix', 'bug', 'resolve', 'issue', 'hotfix'],
     'Refactoring & Style': ['refactor', 'style', 'cleanup', 'lint'],
-    'Documentation': ['docs', 'readme', 'documentation'],
+    'Documentation': ['docs', 'documentation'], # Removed 'readme' to avoid conflict with exclusion
     'Build & CI/CD': ['build', 'ci', 'cd', 'deploy', 'release'],
     'Testing': ['test', 'spec', 'snapshot'],
 }
 
 def get_group_title(message):
+    """Assigns a group title to a commit message based on keywords."""
     lower_message = message.lower()
     for title, keywords in KEYWORD_GROUPS.items():
         if any(keyword in lower_message for keyword in keywords):
             return title
-    return 'Miscellaneous'
+    return 'Features'
 
 def group_commits(raw_text):
+    """Parses raw git log text, filters it, and groups commits."""
     if not raw_text.strip():
         return []
 
     lines = raw_text.strip().split('\n')
-    raw_commits = []
+    all_commits = []
+    # Words to exclude from commit messages (case-insensitive)
+    exclude_keywords = {"github", "commit", "branch", "readme"}
+    
     for line in lines:
         parts = line.split('|')
         if len(parts) < 3:
             continue
         try:
+            author = parts[0].strip()
+            # Exclude GitHub Actions bot
+            if author.lower() == "github-actions[bot]":
+                continue
+
             date = datetime.fromisoformat(parts[1].strip()).strftime('%Y-%m-%d')
-            raw_commits.append({
-                'author': parts[0].strip(),
+            message = '|'.join(parts[2:]).strip()
+            lower_message = message.lower()
+            
+            # Exclude merge commits and messages with specific keywords
+            if lower_message.startswith('merge ') or any(keyword in lower_message for keyword in exclude_keywords):
+                continue
+                
+            group_title = get_group_title(message)
+            
+            all_commits.append({
+                'title': group_title,
                 'date': date,
-                'message': '|'.join(parts[2:]).strip(),
+                'author': author,
+                'message': message,
             })
         except ValueError:
+            # Skip lines that don't parse correctly
             continue
 
-    grouped_by_date_and_title = {}
+    return all_commits
 
-    for commit in raw_commits:
-        group_title = get_group_title(commit['message'])
-        date = commit['date']
-
-        if date not in grouped_by_date_and_title:
-            grouped_by_date_and_title[date] = {}
-        if group_title not in grouped_by_date_and_title[date]:
-            grouped_by_date_and_title[date][group_title] = []
-        grouped_by_date_and_title[date][group_title].append(commit)
-
-    final_groups = []
-    group_id = 1
-    for date in sorted(grouped_by_date_and_title.keys(), reverse=True):
-        for title in grouped_by_date_and_title[date]:
-            final_groups.append({
-                'id': f'group-{group_id}',
-                'title': title,
-                'date': date,
-                'commits': [{
-                    'author': c['author'],
-                    'message': c['message']
-                } for c in grouped_by_date_and_title[date][title]]
-            })
-            group_id += 1
-
-    return final_groups
-
-def download_csv(groups, file_path):
+def download_csv(commits, file_path):
+    """Writes the list of commits to a CSV file."""
     with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Group Title', 'Group Date', 'Author', 'Commit Message'])
+        csv_writer.writerow(['S.No.', 'Group Title', 'Group Date', 'Author', 'Commit Message'])
 
-        for group in groups:
-            for commit in group['commits']:
-                csv_writer.writerow([
-                    group['title'],
-                    group['date'],
-                    commit['author'],
-                    commit['message'],
-                ])
+        for i, commit in enumerate(commits):
+            csv_writer.writerow([
+                i + 1,
+                commit['title'],
+                commit['date'],
+                commit['author'],
+                commit['message'],
+            ])
