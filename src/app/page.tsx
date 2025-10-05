@@ -12,7 +12,7 @@ export default function Home() {
           Git Insights Excelerator
         </h1>
         <p className="text-muted-foreground mt-2 text-lg">
-          Intelligently group your Git commits and export them to CSV.
+          Group your Git commits locally and export them to CSV.
         </p>
       </header>
       <section className="max-w-4xl mx-auto bg-card p-6 rounded-lg shadow-md mb-8">

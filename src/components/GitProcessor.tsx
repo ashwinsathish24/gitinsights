@@ -6,11 +6,10 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Zap } from 'lucide-react';
+import { Layers, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { groupCommitsAction } from '@/app/actions';
-import { parseGroupedCommits, type CommitGroup } from '@/lib/parsing';
+import { groupCommits, type CommitGroup } from '@/lib/parsing';
 import { ResultsDisplay } from './ResultsDisplay';
 
 const FormSchema = z.object({
@@ -21,7 +20,6 @@ const FormSchema = z.object({
 
 export function GitProcessor() {
   const [groupedCommits, setGroupedCommits] = useState<CommitGroup[] | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -29,42 +27,24 @@ export function GitProcessor() {
     defaultValues: { commitLog: '' },
   });
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
-    setIsSubmitting(true);
+  function onSubmit(data: z.infer<typeof FormSchema>) {
     setGroupedCommits(null);
 
-    const result = await groupCommitsAction(data.commitLog);
-
-    if (result.error) {
+    const parsedData = groupCommits(data.commitLog);
+    
+    if (parsedData.length === 0) {
       toast({
         variant: 'destructive',
-        title: 'An error occurred',
-        description: result.error,
+        title: 'No Groups Found',
+        description: 'Could not group any commits. Check your commit log format.',
       });
-    } else if (result.data) {
-      const parsedData = parseGroupedCommits(result.data);
-      if (parsedData.length === 0) {
-        toast({
-          variant: 'destructive',
-          title: 'Parsing Error',
-          description: 'Could not parse the AI response. The format might be unexpected or no groups were found.',
-        });
-      } else {
-        setGroupedCommits(parsedData);
-        toast({
-          title: 'Success!',
-          description: 'Your commits have been grouped.',
-        });
-      }
     } else {
+      setGroupedCommits(parsedData);
       toast({
-        variant: 'destructive',
-        title: 'An error occurred',
-        description: 'Received an empty response from the server.',
+        title: 'Success!',
+        description: 'Your commits have been grouped.',
       });
     }
-
-    setIsSubmitting(false);
   }
 
   return (
@@ -89,27 +69,13 @@ export function GitProcessor() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-              {isSubmitting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Zap className="mr-2 h-4 w-4" />
-              )}
-              {isSubmitting ? 'Grouping...' : 'Group Commits'}
+            <Button type="submit" className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Layers className="mr-2 h-4 w-4" />
+              Group Commits
             </Button>
           </form>
         </Form>
       </section>
-
-      {isSubmitting && (
-        <div className="flex justify-center items-center my-12 flex-col gap-4 text-center">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <div >
-                <p className="font-semibold text-lg">AI is thinking...</p>
-                <p className="text-muted-foreground">Please wait while we group your commits.</p>
-            </div>
-        </div>
-      )}
 
       {groupedCommits && <ResultsDisplay groups={groupedCommits} />}
     </>
