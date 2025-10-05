@@ -1,6 +1,13 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+      // Allow longer for AI operations
+      executionTimeout: 120,
+    },
+  },
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
