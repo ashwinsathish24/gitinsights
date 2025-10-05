@@ -16,12 +16,10 @@ basedir = os.path.dirname(__file__)
 class GitInsightsApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Git Insights Excelerator")
+        self.setWindowTitle("Git-Excel")
         self.setGeometry(100, 100, 800, 600)
 
         # Set the application icon
-        self.setWindowIcon(QIcon(os.path.join(basedir, "favicon.ico")))
-
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
@@ -50,10 +48,14 @@ class GitInsightsApp(QMainWindow):
 
         # Results Section
         self.results_table = QTableWidget()
-        self.results_table.setColumnCount(5)
-        self.results_table.setHorizontalHeaderLabels(["S.No.", "Group Title", "Group Date", "Author", "Commit Message"])
+        self.results_table.setColumnCount(4)
+        self.results_table.setHorizontalHeaderLabels(["S.No.", "Group Title", "Group Date", "Commit Message"])
         header = self.results_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        self.results_table.setColumnWidth(0, 50) # S.No.
+        self.results_table.setColumnWidth(1, 150) # Group Title
+        self.results_table.setColumnWidth(2, 100) # Group Date
         self.layout.addWidget(self.results_table)
 
 
@@ -100,8 +102,7 @@ class GitInsightsApp(QMainWindow):
             self.results_table.setItem(row, 0, QTableWidgetItem(str(row + 1)))
             self.results_table.setItem(row, 1, QTableWidgetItem(commit_info['title']))
             self.results_table.setItem(row, 2, QTableWidgetItem(commit_info['date']))
-            self.results_table.setItem(row, 3, QTableWidgetItem(commit_info['author']))
-            self.results_table.setItem(row, 4, QTableWidgetItem(commit_info['message']))
+            self.results_table.setItem(row, 3, QTableWidgetItem(commit_info['message']))
 
 
     def get_git_log(self, repo_path, branch):

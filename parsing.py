@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 
 KEYWORD_GROUPS = {
-    'Authentication & Users': ['auth', 'user', 'login', 'password', 'register', 'profile'],
+    'Authentication & Users': ['auth', 'user', 'login', 'password', 'register', 'profile', 'btrl', 'license'],
     'Features': ['feat', 'implement', 'add', 'create', 'added'],
     'Bug Fixes': ['fix', 'bug', 'resolve', 'issue', 'hotfix'],
     'Refactoring & Style': ['refactor', 'style', 'cleanup', 'lint'],
@@ -17,7 +17,7 @@ def get_group_title(message):
     for title, keywords in KEYWORD_GROUPS.items():
         if any(keyword in lower_message for keyword in keywords):
             return title
-    return 'Features'
+    return 'Features' # Default to 'Features' if no other category matches
 
 def group_commits(raw_text):
     """Parses raw git log text, filters it, and groups commits."""
@@ -27,7 +27,7 @@ def group_commits(raw_text):
     lines = raw_text.strip().split('\n')
     all_commits = []
     # Words to exclude from commit messages (case-insensitive)
-    exclude_keywords = {"github", "commit", "branch", "readme"}
+    exclude_keywords = {"github", "commit", "branch", "readme", "__pycache__", "yml", "pyinstaller"}
     
     for line in lines:
         parts = line.split('|')
@@ -52,7 +52,6 @@ def group_commits(raw_text):
             all_commits.append({
                 'title': group_title,
                 'date': date,
-                'author': author,
                 'message': message,
             })
         except ValueError:
@@ -65,13 +64,12 @@ def download_csv(commits, file_path):
     """Writes the list of commits to a CSV file."""
     with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['S.No.', 'Group Title', 'Group Date', 'Author', 'Commit Message'])
+        csv_writer.writerow(['S.No.', 'Group Title', 'Group Date', 'Commit Message'])
 
         for i, commit in enumerate(commits):
             csv_writer.writerow([
                 i + 1,
                 commit['title'],
                 commit['date'],
-                commit['author'],
                 commit['message'],
             ])
