@@ -16,10 +16,6 @@ export default function Home() {
         </p>
       </header>
       <section className="max-w-4xl mx-auto bg-card p-6 rounded-lg shadow-md mb-8">
-        <h2 className="font-headline text-2xl font-bold mb-2">Instructions</h2>
-        <p className="mb-4 text-card-foreground">
-          To get your commit history, run the following command in your terminal from your project's directory.
-        </p>
         <div className="bg-muted p-4 rounded-md text-muted-foreground font-code text-sm overflow-x-auto flex items-center gap-2">
           <Code className="w-4 h-4 flex-shrink-0" />
           <span>{gitCommand}</span>
